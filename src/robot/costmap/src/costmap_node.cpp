@@ -6,10 +6,15 @@
 CostmapNode::CostmapNode() : Node("costmap"), costmap_(robot::CostmapCore(this->get_logger())) {
   // Initialize the constructs and their parameters
   costmap_pub_ = this->create_publisher<nav_msgs::msg::OccupancyGrid>("/costmap", 10);
+
+  laser_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+    "/lidar", 10,
+    std::bind(&CostmapNode::laserCallback, this, std::placeholders::_1));
+
   timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&CostmapNode::publishCostmap, this));
 }
  
-// Define the timer to publish a message every 500ms
+// Define the timer to publish an empty costmap placeholder every 500ms
 void CostmapNode::publishCostmap() {
   auto grid = nav_msgs::msg::OccupancyGrid();
 
@@ -29,6 +34,10 @@ void CostmapNode::publishCostmap() {
   //message.data = "Goodbye, ROS 2.";
   RCLCPP_INFO(this->get_logger(), "placeholder costmap");
   costmap_pub_->publish(grid);
+}
+
+void CostmapNode::laserCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
+  RCLCPP_INFO(this->get_logger(), "scan with %zu number of ranges",msg->ranges.size());
 }
  
 int main(int argc, char ** argv)
