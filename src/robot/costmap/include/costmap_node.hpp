@@ -7,16 +7,21 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
  
 #include "costmap_core.hpp"
- 
+
+//class definition/shape
 class CostmapNode : public rclcpp::Node {
   public:
+    //constructor
     CostmapNode();
-    
+
   private: 
     // Place callback function here
+
+    //private methods - used within this class only
     void publishCostmap();
     void laserCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
 
+    // data which is stored in member variables 
     robot::CostmapCore costmap_;
     // Place these constructs here
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_pub_;

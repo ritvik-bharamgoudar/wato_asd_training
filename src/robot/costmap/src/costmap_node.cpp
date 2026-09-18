@@ -14,16 +14,16 @@ CostmapNode::CostmapNode() : Node("costmap"), costmap_(robot::CostmapCore(this->
   timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&CostmapNode::publishCostmap, this));
 }
  
-// Define the timer to publish an empty costmap placeholder every 500ms
+// Define grid to publish an empty costmap placeholder
 void CostmapNode::publishCostmap() {
   auto grid = nav_msgs::msg::OccupancyGrid();
 
   grid.header.stamp.sec = 0;
   grid.header.frame_id = "map";
 
-  grid.info.resolution = 0.1;
-  grid.info.width = 50;
-  grid.info.height = 50;
+  grid.info.resolution = resolution_;
+  grid.info.width = width_;
+  grid.info.height = height_;
   
   grid.info.origin.position.x = 0.0;
   grid.info.origin.position.y = 0.0;
@@ -37,6 +37,7 @@ void CostmapNode::publishCostmap() {
 }
 
 void CostmapNode::laserCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
+  costmap_.laserScan(msg->ranges, msg->angle_min, msg->angle_increment, msg->range_min, msg->range_max);
   RCLCPP_INFO(this->get_logger(), "scan with %zu number of ranges",msg->ranges.size());
 }
  
