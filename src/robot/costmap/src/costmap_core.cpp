@@ -37,17 +37,25 @@ costmap pseudo code:
 INPUT: laserscan(arr[ranges], float(min_angle). 
 float(min_increment), float(range_min), float(range_max))
 
-OUTPUT: OccupancyGrid(costmap)
+OUTPUT: OccupancyGrid(/costmap)
+    requires:
+    msg.header.stamp
+    msg.header.frame_id //robot frame
+    msg.info.resolution
+    msg.info.width
+    msg.info.height
+    msg.info.origin // (0,0) to bottom left of robot - so x = -WIDTH/2 * RES, y = -HEIGHT/2 * RES
+    msg.data // 1D array
 
 CONSTANTS:
-WIDTH = 100
-HEGHT = 100
-RES = 0.1
-INF_RADIUS = 10 // number of cells
-MAX_COST = 100
+INT WIDTH = 100
+INT HEGHT = 100
+DOUBLE RES = 0.1
+DOUBLE INF_RADIUS = 10.0 // metres
+INT MAX_COST = 100
 
 FUNCTION initialiseCostmap()
-    Occup_grid = zeros)WIDTH,HEIGHT)
+    MATRIX Occup_grid = zeros)WIDTH,HEIGHT)
     RETURN Occup_Grid
 
 FUNCTOIN laserCallback(scan)
@@ -62,10 +70,10 @@ FUNCTOIN laserCallback(scan)
         (row,col)= comvertToGrid(range,angle)
 
         FUNCTION convertToGrid(range, angle)
-            x = range * cos(angle)
-            y = range * sin(angle)
-            col = floor(x / RES + WIDTH / 2)
-            row = floor(y / RES + HEIGHT / 2)
+            DOUBLE x = range * cos(angle)
+            DOUBLE y = range * sin(angle)
+            INT col = floor(x / RES + WIDTH / 2)
+            INT row = floor(y / RES + HEIGHT / 2)
             RETURN (row,col)
 
         markObstacle(OccupGrid. row, col)
@@ -77,27 +85,37 @@ FUNCTOIN laserCallback(scan)
     inflateObstacles(OccupGrid, INF_RADIUS)
 
     FUNCTION inflateObstacles(OccupGrid, INF_RADIUS)
+        radius_cells = floor(INF_RADIUS / RES) //obstacle window in cell distance
+        obstaCells = []
+        for row in 0:HEIGHT-1
+            for col in 0:WIDTH-1
+                if grid[row][col] == MAX_COST
+                    obstaCells.append((row,col)) // starter array of all obstacle cells
+        
+        for (o_row, o_col) in obstaCells
+            for d_row in -cell_radius:cell_radius
+                for d_col in -cell_radius:cell_radius // for a window around cell distance 
+                    window_row = o_row + d_row
+                    window_col = o_col + d_col // loop each cell of window
 
+                    if 0<=window_row<HEIGHT && 0<=window_col<WIDTH
+                        dist = sqrt((d_row * RES)^2 + (d_col * RES)^2)
 
+                        if dist <= INF_RADIUS
+                            cost = MAX_COST * (1 - dist/INF_RADIUS)
+                            if cost > grid[window_row][window_col]
+                                grid[window_row][window_col] = cost
+        publishCostmap()
 
+        FUNCTION publishCostmap()
+            occupArray = []
+            for row in 0:HEIGHT-1
+                for col in 0:WIDTH-1
+                    occupArray.append(occupGrid[row][col])
+            RETURN occupArray
 
-            if 0<=grid_row<width && 0<=grid_col<height:
-                OccupancyGrid[row][col] = 100
+        publish occupArray
 
-            
-inflateObstacles(OccupancyGrid, infl_radius):
-for row, col in OccupancyGrid
-    if Occupancygrid[row][col] == 100:
-        starters.append([row,col])
-        std::array<stf::array<int, 10>, 3> window{};
-        h = window.height
-        w = window.width
-        for [row][col] in window:
-            cost = 100 * (1- root((row-w/2)^2 + (col - h/2)^2)))
-            if 0<= (starter[row][col] + window_row - window_width/2)) < width && smae for column:
-                && if cost > OccupancyGrid[row][col]:
-                    OccupancyGrid[row][col] = cost
-intialise Occupancygrid()
             
 
 
