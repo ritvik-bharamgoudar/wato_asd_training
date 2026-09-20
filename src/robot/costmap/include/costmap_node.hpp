@@ -27,6 +27,7 @@ class CostmapNode : public rclcpp::Node {
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr costmap_pub_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_sub_;
     rclcpp::TimerBase::SharedPtr timer_;
+    rclcpp::Time last_scan_stamp_; // sync up published map with lidar input stamp
 };
  
 #endif 

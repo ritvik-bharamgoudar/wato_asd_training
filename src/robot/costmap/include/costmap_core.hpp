@@ -4,6 +4,13 @@
 #include "rclcpp/rclcpp.hpp"
 #include <vector>
 
+const int WIDTH = 200; // cells
+const int HEIGHT = 200; // cells
+const double RES = 0.1; // both grid size and res chosen after testing in map
+const double INF_RADIUS = 1.0; // metres
+const int MAX_COST = 100;
+
+
 namespace robot
 {
 
@@ -12,41 +19,26 @@ class CostmapCore {
     // Constructor, we pass in the node's RCLCPP logger to enable logging to terminal
     explicit CostmapCore(const rclcpp::Logger& logger);
 
-    struct Point{
-      float x;
-      float y;
-    };
-    
-    // laser scan data
-    void laserScan(
-      const std::vector<float>& radii, 
-      float angle_min,
-      float angle_increment,
-      float range_min,
-      float range_max);
-    
-    // define grid state
-    void emptyGrid(int8_t value = 0);
-    int width() const;
-    int height() const;
-    double resolution() const;
+    void processScan(const std::vector<float> &ranges, double angle_min, double angle_increment, double range_min, double range_max);
 
-    Point polarToCartesain(double radius, float angle);
-    void addCost(const std::vector<float>);
+    std::vector<int8_t> returnGrid();
 
 
   private:
+    //member variables
     rclcpp::Logger logger_;
-    
 
-    // grid state
-    std::vector<int8_t> grid_;
-    int width_;
-    int height_;
-    double resolution_;
+    std::vector<int8_t> occup_grid_;
 
+    // methods
+    std::vector<int8_t> initialiseCostmap();
+
+    void convertToGrid(double range, double angle, int &col, int &row);
+
+    void markObstacles(std::vector<int8_t> &grid,int row, int col, int cost);
+
+    void inflateObstacles(std::vector<int8_t> &grid);
 };
 
 }  
-
 #endif  
