@@ -39,7 +39,7 @@ void CostmapCore::convertToGrid(double range, double angle, int &row, int &col) 
     double x = range * cos(angle);
     double y = range * sin(angle);
     col = int(floor(x/RES + WIDTH/2));
-    row = int(floor(y/RES + HEIGHT/2)); // change to grid frame, grid origin = robot_origin(x,y) - (WIDTH/2, HEIGHT/2)
+    row = int(floor(y/RES + HEIGHT/2)); // convert to cell in grid frame, grid origin = robot_origin(x,y) - (WIDTH/2, HEIGHT/2)
 }
 
 void CostmapCore::markObstacles(std::vector<int8_t> &grid,int row, int col, int cost) {
