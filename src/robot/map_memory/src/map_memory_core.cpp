@@ -3,12 +3,65 @@
 namespace robot
 {
 
-MapMemoryCore::MapMemoryCore(const rclcpp::Logger& logger) 
-  : logger_(logger) {}
-
+MapMemoryCore::MapMemoryCore(const rclcpp::Logger& logger) : logger_(logger) {
+  global_map_ = initialiseMap(); // set grid spanning full map to -1 everywhere 
+  RCLCPP_INFO(logger_, "initial global map size=%zu", global_map_.size());
 } 
- 
 
+void MapMemoryCore::mergeCostmap(const nav_msgs::msg::OccupancyGrid::SharedPtr costmap_msg, double x, double y, double theta){
+  RCLCPP_INFO(logger_, "mergeCostmap called, costmap size=%zu, pose=(%f, %f, %f)", costmap_msg->data.size(), x, y, theta);
+}
+
+std::vector<int8_t> MapMemoryCore::initialiseMap(){
+  return std::vector<int8_t>((G_WIDTH * G_HEIGHT), -1);
+
+}
+}
+
+
+/*
+// Integrate the latest costmap into the global map
+void mergeCostmap(costmap_msg, odom_msg) {
+    // Transform and merge the latest costmap into the global map
+    // (Implementation would handle grid alignment and merging logic)
+
+    double robo_x = odom_msg.pose.pose.position.x
+    double robo_y = odom_msg.pose.pose.position.y
+    double theta = tf2::getYaw(msg.pose.pose.orientation)
+    double cos_t = cos(theta) 
+    double sin_t = sin(theta) // rotation vector
+
+    for (size_t i = 0; i<costmap.data.size();i++){
+
+      int new_cost = costmap.data[i]
+
+      int row_c = int(i / costmap_WIDTH)
+      int col_c = int(i % costmap_WIDTH) // as stored as 1d array where i = (row*width+col)
+
+      double x_local = col_c * costmap_RES + costmap.origin.x
+      double y_local = row_c * costmap_RES + costmap.origin.y
+
+      double x_global = robo_x + x_local * cos_t - y_local*sin_t
+      double y_global = robo_y + x_local * sin_t + y_local*cos_t
+
+      int col_g = floor((x_global - global.origin.x) / GLOBAL_RES)
+      int row_g = floor((y_global - global.origin.y) / GLOBAL_RES)
+
+      if 0 <= row_g && row_g < G_HEIGHT && 0<=col_g && col_g < WIDTH:
+        mergeCells(row_g, col_g, new_cost)
+
+
+void mergeCells(row_g. col_g, new_cost)
+        curr_cost = global_map_[row_g * G_WIDHT + col_g]
+        if curr_cost == -1)
+          global_map_[row_g * G_WIDHT + col_g] = new_cost
+        else:
+          double weighted_cost = NEW_COST_WEIGHT * new_cost + (1-NEWCOST_WEIGHT) * curr_cost
+          global_map_[row_g * G_WIDHT + col_g] = int8_t(weighted_cost)
+    }
+}
+
+*/
 
 /* Pseudo code
 
@@ -76,13 +129,13 @@ OUTPUTS:
 // Global map and robot position
 nav_msgs::msg::OccupancyGrid global_map_;
 double last_x, last_y;
-bool costmap_updated_ = false;
+bool is_costmap_updated_ = false;
 
 // Callback for costmap updates
 void costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
     // Store the latest costmap
     latest_costmap_ = costmap_msg;
-    costmap_updated_ = true;
+    is_costmap_updated_ = true;
 }
 
 // Callback for odometry updates
@@ -100,7 +153,7 @@ void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
 }
 
 // Integrate the latest costmap into the global map
-void integrateCostmap(costmap_mag, odom_msg) {
+void mergeCostmap(costmap_msg, odom_msg) {
     // Transform and merge the latest costmap into the global map
     // (Implementation would handle grid alignment and merging logic)
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(map_memory)
+project(map_memory) 
 
 # Set compiler to use C++ 17 standard
 if(NOT CMAKE_CXX_STANDARD)
@@ -13,6 +13,11 @@ endif()
 # Search for dependencies required for building this package
 find_package(ament_cmake REQUIRED) # ROS2 build tool
 find_package(rclcpp REQUIRED)      # ROS2 C++ package
+find_package(std_msgs REQUIRED)    # Need std_msgs package to compile
+find_package(nav_msgs REQUIRED)    # ROS2 nav topics
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)         # pose transform methods
+find_package(tf2_geometry_msgs REQUIRED)
 
 # Compiles source files into a library
 # A library is not executed, instead other executables can link
@@ -25,14 +30,26 @@ add_library(map_memory_lib
 target_include_directories(map_memory_lib
   PUBLIC include)
 # Add ROS2 dependencies required by package
-ament_target_dependencies(map_memory_lib 
+ament_target_dependencies(
+  map_memory_lib 
   rclcpp
+  std_msgs
+  nav_msgs
+  geometry_msgs
 )
 
 # Create ROS2 node executable from source files
 add_executable(map_memory_node src/map_memory_node.cpp)
 # Link to the previously built library to access map_memory classes and methods
 target_link_libraries(map_memory_node map_memory_lib)
+ament_target_dependencies(
+map_memory_node
+rclcpp
+nav_msgs
+geometry_msgs
+tf2
+tf2_geometry_msgs
+)
 
 # Copy executable to installation location
 install(TARGETS
