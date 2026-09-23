@@ -22,28 +22,28 @@ MapMemoryNode::MapMemoryNode() : Node("map_memory"), map_memory_(robot::MapMemor
       std::chrono::seconds(1), std::bind(&MapMemoryNode::updateMap, this));
 }
 
-/*
+
 // data format from OccupancyGrid (1d int8_t array for grid)
 void MapMemoryNode::publishMap() {
   auto grid = nav_msgs::msg::OccupancyGrid();
 
-  grid.header.stamp = ; // lidar input time stamp
-  grid.header.frame_id = ;
+  grid.header.stamp = this->now(); 
+  grid.header.frame_id = "sim_world";
 
-  grid.info.resolution = ;
-  grid.info.width = ;
-  grid.info.height = ;
+  grid.info.resolution = G_RES;
+  grid.info.width = G_WIDTH;
+  grid.info.height = G_HEIGHT;
   
-  grid.info.origin.position.x = (/2 * -1 * ); 
-  grid.info.origin.position.y = (/2 * -1 * ); // lidar can be negative but grid is not, so origin taken bottom left relative to robot position
+  grid.info.origin.position.x = G_ORIGIN_X; 
+  grid.info.origin.position.y = G_ORIGIN_Y; // lidar can be negative but grid is not, so origin taken bottom left relative to robot position
   grid.info.origin.position.z = 0.0;
 
-  grid.data = map_.returnMap();
+  grid.data = map_memory_.returnMap();
 
-  RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", map_.returnMap().size()); 
+  RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", map_memory_.returnMap().size()); 
   map_pub_->publish(grid);
 }
-*/
+
 
 void MapMemoryNode::costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
   latest_costmap_ = msg;
@@ -82,6 +82,7 @@ void MapMemoryNode::updateMap(){
   }
 
   map_memory_.mergeCostmap(latest_costmap_, robot_x_, robot_y_, robot_theta_);
+  publishMap();
 
   should_update_map_ = false;
   is_costmap_updated_ = false;

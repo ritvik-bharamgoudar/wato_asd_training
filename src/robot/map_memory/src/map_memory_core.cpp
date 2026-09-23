@@ -1,4 +1,6 @@
 #include "map_memory_core.hpp"
+#include <cmath>
+#include <vector>
 
 namespace robot
 {
@@ -8,13 +10,64 @@ MapMemoryCore::MapMemoryCore(const rclcpp::Logger& logger) : logger_(logger) {
   RCLCPP_INFO(logger_, "initial global map size=%zu", global_map_.size());
 } 
 
-void MapMemoryCore::mergeCostmap(const nav_msgs::msg::OccupancyGrid::SharedPtr costmap_msg, double x, double y, double theta){
-  RCLCPP_INFO(logger_, "mergeCostmap called, costmap size=%zu, pose=(%f, %f, %f)", costmap_msg->data.size(), x, y, theta);
-}
-
 std::vector<int8_t> MapMemoryCore::initialiseMap(){
+  hit_count_ = std::vector<int>((G_WIDTH * G_HEIGHT), 0);
   return std::vector<int8_t>((G_WIDTH * G_HEIGHT), -1);
 
+
+}
+
+// g: global, c: costmap, r: robot
+void MapMemoryCore::mergeCostmap(const nav_msgs::msg::OccupancyGrid::SharedPtr costmap_msg, double r_x, double r_y, double r_theta){
+  double cos_t = std::cos(r_theta);
+  double sin_t = std::sin(r_theta);
+
+  //for each local cost: index->cell->cartesian->global frame->global cell
+  int c_width = static_cast<int>(costmap_msg->info.width);
+  for (size_t i=0; i < costmap_msg->data.size(); i++){
+    int new_cost = costmap_msg->data[i];
+    int c_row = static_cast<int>(i) / c_width;
+    int c_col = static_cast<int>(i) % c_width;
+
+    //costmap cell to cartesian coordinates
+    double c_x = c_col * costmap_msg->info.resolution + costmap_msg->info.origin.position.x;
+    double c_y = c_row * costmap_msg->info.resolution + costmap_msg->info.origin.position.y;
+
+    // costmap frame to global frame - transform with robot pose
+    double g_x = r_x + (c_x * cos_t) - (c_y * sin_t);
+    double g_y = r_y + (c_x * sin_t) + (c_y * cos_t);
+
+    int g_col = int(std::floor((g_x - G_ORIGIN_X) / G_RES));
+    int g_row = int(std::floor((g_y - G_ORIGIN_Y) / G_RES));
+
+    if (g_row >= 0 && g_row < G_HEIGHT && g_col >= 0 && g_col < G_WIDTH) {
+      global_map_[g_row * G_WIDTH + g_col] = static_cast<int8_t>(new_cost);
+      //assignWeightedCost(g_row, g_col, G_WIDTH, new_cost);
+    }
+  }
+  RCLCPP_INFO(logger_, "mergeCostmap called, costmap size=%zu, pose=(%f, %f, %f)", costmap_msg->data.size(), r_x, r_y, r_theta);
+    
+}
+
+// needs to consider what happens to costmap cells outside of lidar range - they get set to 0 but that's not true, should be unknown
+// requires propagating that lidar info into costmap as an unknown cell
+void MapMemoryCore::assignWeightedCost(int new_row, int new_col, int width, int new_cost){
+      int ix = new_row * width + new_col;
+
+      if (new_cost > 0){
+        if (hit_count_[ix] < HITS_REQUIRED){
+          hit_count_[ix]++;
+        }
+        if (hit_count_[ix] >= HITS_REQUIRED && new_cost > global_map_[ix]){
+          global_map_[ix] = static_cast<int8_t>(new_cost);
+        }
+      }
+
+}
+
+
+std::vector<int8_t> MapMemoryCore::returnMap() const {
+  return global_map_;
 }
 }
 
@@ -38,26 +91,26 @@ void mergeCostmap(costmap_msg, odom_msg) {
       int row_c = int(i / costmap_WIDTH)
       int col_c = int(i % costmap_WIDTH) // as stored as 1d array where i = (row*width+col)
 
-      double x_local = col_c * costmap_RES + costmap.origin.x
-      double y_local = row_c * costmap_RES + costmap.origin.y
+      double c_x = col_c * costmap_RES + costmap.origin.x
+      double c_y = row_c * costmap_RES + costmap.origin.y
 
-      double x_global = robo_x + x_local * cos_t - y_local*sin_t
-      double y_global = robo_y + x_local * sin_t + y_local*cos_t
+      double g_x = robo_x + c_x * cos_t - c_y*sin_t
+      double g_y = robo_y + c_x * sin_t + c_y*cos_t
 
-      int col_g = floor((x_global - global.origin.x) / GLOBAL_RES)
-      int row_g = floor((y_global - global.origin.y) / GLOBAL_RES)
+      int g_col = floor((g_x - global.origin.x) / GLOBAL_RES)
+      int g_row = floor((g_y - global.origin.y) / GLOBAL_RES)
 
-      if 0 <= row_g && row_g < G_HEIGHT && 0<=col_g && col_g < WIDTH:
-        mergeCells(row_g, col_g, new_cost)
+      if 0 <= g_row && g_row < G_HEIGHT && 0<=g_col && g_col < WIDTH:
+        mergeCells(g_row, g_col, new_cost)
 
 
-void mergeCells(row_g. col_g, new_cost)
-        curr_cost = global_map_[row_g * G_WIDHT + col_g]
+void mergeCells(g_row. g_col, new_cost)
+        curr_cost = global_map_[g_row * G_WIDHT + g_col]
         if curr_cost == -1)
-          global_map_[row_g * G_WIDHT + col_g] = new_cost
+          global_map_[g_row * G_WIDHT + g_col] = new_cost
         else:
           double weighted_cost = NEW_COST_WEIGHT * new_cost + (1-NEWCOST_WEIGHT) * curr_cost
-          global_map_[row_g * G_WIDHT + col_g] = int8_t(weighted_cost)
+          global_map_[g_row * G_WIDHT + g_col] = int8_t(weighted_cost)
     }
 }
 
@@ -170,26 +223,26 @@ void mergeCostmap(costmap_msg, odom_msg) {
       int row_c = int(i / costmap_WIDTH)
       int col_c = int(i % costmap_WIDTH) // as stored as 1d array where i = (row*width+col)
 
-      double x_local = col_c * costmap_RES + costmap.origin.x
-      double y_local = row_c * costmap_RES + costmap.origin.y
+      double c_x = col_c * costmap_RES + costmap.origin.x
+      double c_y = row_c * costmap_RES + costmap.origin.y
 
-      double x_global = robo_x + x_local * cos_t - y_local*sin_t
-      double y_global = robo_y + x_local * sin_t + y_local*cos_t
+      double g_x = robo_x + c_x * cos_t - c_y*sin_t
+      double g_y = robo_y + c_x * sin_t + c_y*cos_t
 
-      int col_g = floor((x_global - global.origin.x) / GLOBAL_RES)
-      int row_g = floor((y_global - global.origin.y) / GLOBAL_RES)
+      int g_col = floor((g_x - global.origin.x) / GLOBAL_RES)
+      int g_row = floor((g_y - global.origin.y) / GLOBAL_RES)
 
-      if 0 <= row_g && row_g < G_HEIGHT && 0<=col_g && col_g < WIDTH:
-        mergeCells(row_g, col_g, new_cost)
+      if 0 <= g_row && g_row < G_HEIGHT && 0<=g_col && g_col < WIDTH:
+        mergeCells(g_row, g_col, new_cost)
 
 
-void mergeCells(row_g. col_g, new_cost)
-        curr_cost = global_map_[row_g * G_WIDHT + col_g]
+void mergeCells(g_row. g_col, new_cost)
+        curr_cost = global_map_[g_row * G_WIDHT + g_col]
         if curr_cost == -1)
-          global_map_[row_g * G_WIDHT + col_g] = new_cost
+          global_map_[g_row * G_WIDHT + g_col] = new_cost
         else:
           double weighted_cost = NEW_COST_WEIGHT * new_cost + (1-NEWCOST_WEIGHT) * curr_cost
-          global_map_[row_g * G_WIDHT + col_g] = int8_t(weighted_cost)
+          global_map_[g_row * G_WIDHT + g_col] = int8_t(weighted_cost)
     }
 }
 

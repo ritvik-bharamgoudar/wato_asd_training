@@ -22,7 +22,7 @@ void CostmapCore::processScan(const std::vector<float> &ranges, double angle_min
             int row;
             int col;
             convertToGrid(range, angle, row, col); // polar -> cartesian -> discrete grid cell
-            markObstacles(occup_grid_, row, col, MAX_COST); // set cost to any marked cells
+            markLine(occup_grid_, (WIDTH/2), (HEIGHT/2), col, row, MAX_COST, FREE); // set cost to any marked cells
             }
         }
     inflateObstacles(occup_grid_); // set linearly decreasing cost to cells surrounding each obstacle
@@ -31,22 +31,77 @@ void CostmapCore::processScan(const std::vector<float> &ranges, double angle_min
 
 
 std::vector<int8_t> CostmapCore::initialiseCostmap() {
-    std::vector<int8_t> grid((HEIGHT * WIDTH), 0); //1D (row * WIDTH + col)
+    std::vector<int8_t> grid((HEIGHT * WIDTH), UNKNOWN); //1D (row * WIDTH + col)
     return grid;
 }
 
 void CostmapCore::convertToGrid(double range, double angle, int &row, int &col) {
-    double x = range * cos(angle);
-    double y = range * sin(angle);
+    double x = range * std::cos(angle);
+    double y = range * std::sin(angle);
     col = int(floor(x/RES + WIDTH/2));
     row = int(floor(y/RES + HEIGHT/2)); // convert to cell in grid frame, grid origin = robot_origin(x,y) - (WIDTH/2, HEIGHT/2)
 }
 
-void CostmapCore::markObstacles(std::vector<int8_t> &grid,int row, int col, int cost) {
+// not used anymore - markLine instead
+void CostmapCore::markObstacles(std::vector<int8_t> &grid, int row, int col, int cost) {
     if (row >= 0 && row < HEIGHT && col >= 0 && col < WIDTH && cost > grid[row*WIDTH + col]) {
         grid[row*WIDTH + col] = cost;
     }
 }
+
+
+// steps along line towards endpoint (obstacle) marking as 0 (free cell)
+void CostmapCore::markLine(std::vector<int8_t> &grid, int x0, int y0, int x1, int y1, int8_t cost, int8_t free) {
+    int dx = std::abs(x1 - x0);
+    int dy = std::abs(y1 - y0);
+
+    // step change in each axis: if +ve then +1, if -ve then -1, otherwise 0
+    int step_x = (x1 > x0) ? 1 : (x1 < x0 ? -1 : 0);
+    int step_y = (y1 > y0) ? 1 : (y1 < y0 ? -1 : 0);
+
+    int x = x0;
+    int y = y0;
+
+    if (dx >= dy) {
+        // x is dominant: it steps every iteration 
+        // y is minor: it only steps once the running cost overflows dx
+        int runningCost = 0;
+
+        for (int i = 0; i <= dx; ++i) {
+
+            // mark current cell free unless this is the final endpoint
+            if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT){
+            grid[y*WIDTH + x] = (x == x1 && y == y1) ? cost : free;
+            }
+            if (i == dx) break; // reached endpoint, stop stepping
+
+            x += step_x;                 // dominant axis always advances
+            runningCost += dy;       // accumulate the minor delta
+
+            if (runningCost >= dx) { // full circle completed
+                y += step_y;             // minor hand advances once
+                runningCost -= dx;   // subtract the dominant delta, keep the remainder
+            }
+        }
+    } else {
+        // same as above but y is dominant, x is minor
+        int runningCost = 0;
+        for (int i = 0; i <= dy; ++i) {
+
+            if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT){
+            grid[y*WIDTH + x] = (x == x1 && y == y1) ? cost : free;
+            }
+            if (i == dy) break;
+            y += step_y;
+            runningCost += dx;
+            if (runningCost >= dy) {
+                x += step_x;
+                runningCost -= dy;
+            }
+        }
+    }
+}
+
 
 
 void CostmapCore::inflateObstacles(std::vector<int8_t> &grid){
