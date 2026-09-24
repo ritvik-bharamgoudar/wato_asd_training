@@ -16,6 +16,8 @@ find_package(rclcpp REQUIRED)      # ROS2 C++ package
 find_package(std_msgs REQUIRED)    # Need std_msgs package to compile
 find_package(nav_msgs REQUIRED)    # ROS2 nav topics
 find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)         # pose transform methods
+find_package(tf2_geometry_msgs REQUIRED)
 
 # Compiles source files into a library
 # A library is not executed, instead other executables can link
@@ -45,6 +47,8 @@ planner_node
 rclcpp
 nav_msgs
 geometry_msgs
+tf2
+tf2_geometry_msgs
 )
 
 # Copy executable to installation location

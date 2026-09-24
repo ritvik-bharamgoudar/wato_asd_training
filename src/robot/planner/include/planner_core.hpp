@@ -17,9 +17,9 @@ namespace robot
 
 class PlannerCore {
   public:
-    explicit PlannerCore(const rclcpp::Logger& logger);
+    explicit PlannerCore(const rclcpp::Logger& logger); 
 
-    std::vector<int> searchAStar(int start_idx, int goal_idx, const std::vector<int8_t>& grid);
+    std::vector<int> searchAStar(const std::vector<int8_t>& grid, int start_idx, int goal_idx);
     
 
   private:

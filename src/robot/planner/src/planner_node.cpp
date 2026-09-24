@@ -35,6 +35,9 @@ void PlannerNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg){
 
 void PlannerNode::mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
   current_map_ = *msg;
+  if (state_ == State::WAITING_FOR_ROBOT_TO_REACH_GOAL){
+    planPath(); //new map comes through and robot in progress
+  }
   //RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", msg->data.size()); 
 }
 
@@ -50,12 +53,12 @@ void PlannerNode::timerCallback(){
         state_ = State::WAITING_FOR_GOAL;
     } else {
         RCLCPP_INFO(this->get_logger(), "not yet at goal (dist=%f)", dist);
-        planPath(); // if waiting to reach goal, but no map update (every 1.5m moved) - might be stuck somewhere
+        planPath(); // replan might be stuck somewhere and no new map coming through
     }
 }
 
 void PlannerNode::planPath(){
-    if (!is_goal_received_ || !is_odom_received_ || current_map.data.empty()) {
+    if (!is_goal_received_ || !is_odom_received_ || current_map_.data.empty()) {
         RCLCPP_WARN(this->get_logger(), "cannot plan: missing goal, odom, or map data");
         return;
     }
@@ -80,13 +83,52 @@ void PlannerNode::planPath(){
     RCLCPP_WARN(this->get_logger(), "no path found from start to goal");
     return;
     }
-    
-    //convert path cells to world coordinates and calculate heading
+
+    // initialise array of pairs to store world coordinates 
+    std::vector<std::pair<double, double>> world_points;
+    world_points.reserve(path_cells.size());
+
+    // convert each grid cell to world cooridinate
+    // g: grid cell, w: world
+    for (int idx : path_cells) {
+        int gx = idx % info.width;
+        int gy = idx / info.width;
+        double wx = info.origin.position.x + (gx + 0.5) * info.resolution;
+        double wy = info.origin.position.y + (gy + 0.5) * info.resolution;
+        world_points.push_back({wx, wy});
+    }
 
     nav_msgs::msg::Path path_msg;
     path_msg.header.stamp = this->get_clock()->now();
     path_msg.header.frame_id = "map";
-    path_msg.poses = //list of poses with orientation
+
+    // calculate heading to next point
+
+    double prev_yaw = 0.0; // what if the goal point is at the robot position?
+
+    for (size_t i = 0; i < world_points.size(); ++i) {
+        geometry_msgs::msg::PoseStamped pose_stamped;
+        pose_stamped.header = path_msg.header;
+        pose_stamped.pose.position.x = world_points[i].first;
+        pose_stamped.pose.position.y = world_points[i].second;
+        pose_stamped.pose.position.z = 0.0;
+
+        double yaw;
+        if (i + 1 < world_points.size()) {
+            double dx = world_points[i + 1].first - world_points[i].first;
+            double dy = world_points[i + 1].second - world_points[i].second;
+            yaw = std::atan2(dy, dx); // accounts for different quadrants
+            prev_yaw = yaw;
+        } else {
+            yaw = prev_yaw; // last point same heading as penultimate
+        }
+
+        tf2::Quaternion q;
+        q.setRPY(0, 0, yaw); // construct quarternion - only yaw
+        pose_stamped.pose.orientation = tf2::toMsg(q); // convert to pose msg format
+
+        path_msg.poses.push_back(pose_stamped);
+    }
 
     path_pub_->publish(path_msg);
 
