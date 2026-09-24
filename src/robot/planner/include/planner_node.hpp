@@ -33,6 +33,7 @@ private:
     void goalCallback(const geometry_msgs::msg::PointStamped::SharedPtr msg);
     void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
     void timerCallback();
+    void planPath();
 
 
     robot::PlannerCore planner_;

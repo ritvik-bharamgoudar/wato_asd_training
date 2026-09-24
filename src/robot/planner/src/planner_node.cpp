@@ -1,4 +1,7 @@
 #include "planner_node.hpp"
+#include <cmath>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 PlannerNode::PlannerNode() : Node("planner_node"), state_(State::WAITING_FOR_GOAL), planner_(robot::PlannerCore(this->get_logger()))
 {
@@ -19,7 +22,7 @@ void PlannerNode::goalCallback(const geometry_msgs::msg::PointStamped::SharedPtr
     is_goal_received_ = true;
     goal_ = *msg;
     state_ = State::WAITING_FOR_ROBOT_TO_REACH_GOAL;
-    
+    planPath(); // can start planning immediately - validity checks in planPath function
     RCLCPP_INFO(this->get_logger(), "goal received, state -> WAITING_FOR_ROBOT_TO_REACH_GOAL");
 }
 
@@ -27,12 +30,12 @@ void PlannerNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg){
   is_odom_received_ = true;
   robot_pose_ = msg->pose.pose;
 
-  RCLCPP_INFO(this->get_logger(), "planner odom position: %f ",msg->pose.pose.position.x);
+  //RCLCPP_INFO(this->get_logger(), "planner odom position: %f ",msg->pose.pose.position.x);
 }
 
 void PlannerNode::mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
   current_map_ = *msg;
-  RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", msg->data.size()); 
+  //RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", msg->data.size()); 
 }
 
 void PlannerNode::timerCallback(){
@@ -47,13 +50,13 @@ void PlannerNode::timerCallback(){
         state_ = State::WAITING_FOR_GOAL;
     } else {
         RCLCPP_INFO(this->get_logger(), "not yet at goal (dist=%f)", dist);
-        // planPath() 
+        planPath(); // if waiting to reach goal, but no map update (every 1.5m moved) - might be stuck somewhere
     }
 }
 
 void PlannerNode::planPath(){
     if (!is_goal_received_ || !is_odom_received_ || current_map.data.empty()) {
-        //warning message
+        RCLCPP_WARN(this->get_logger(), "cannot plan: missing goal, odom, or map data");
         return;
     }
     
@@ -73,6 +76,11 @@ void PlannerNode::planPath(){
     // call A* search and return list of cells that form path
     std::vector<int> path_cells = planner_.searchAStar(current_map_.data, start_idx, goal_idx);
 
+    if (path_cells.empty()) {
+    RCLCPP_WARN(this->get_logger(), "no path found from start to goal");
+    return;
+    }
+    
     //convert path cells to world coordinates and calculate heading
 
     nav_msgs::msg::Path path_msg;
@@ -80,7 +88,7 @@ void PlannerNode::planPath(){
     path_msg.header.frame_id = "map";
     path_msg.poses = //list of poses with orientation
 
-    path_pub_->publish(path_msg)
+    path_pub_->publish(path_msg);
 
 }
 

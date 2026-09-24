@@ -2,6 +2,15 @@
 #define PLANNER_CORE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
+#include <vector>
+#include <unordered_map>
+#include <cstdint>
+
+const int WIDTH = 200;
+const int HEIGHT = 200;
+const int8_t OBSTACLE = 100;
+const double COST_WEIGHT = 0.05;
+
 
 namespace robot
 {
