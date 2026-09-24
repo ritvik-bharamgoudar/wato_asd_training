@@ -40,7 +40,7 @@ void MapMemoryNode::publishMap() {
 
   grid.data = map_memory_.returnMap();
 
-  RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", map_memory_.returnMap().size()); 
+  //RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", map_memory_.returnMap().size()); 
   map_pub_->publish(grid);
 }
 
@@ -48,7 +48,7 @@ void MapMemoryNode::publishMap() {
 void MapMemoryNode::costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
   latest_costmap_ = msg;
   is_costmap_updated_ = true;
-  RCLCPP_INFO(this->get_logger(), "costmap with %zu size",msg->data.size());
+  //RCLCPP_INFO(this->get_logger(), "costmap with %zu size",msg->data.size());
 }
 
 void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
@@ -73,7 +73,7 @@ void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
     last_y_ = robot_y_;
     should_update_map_ = true;
   }
-  RCLCPP_INFO(this->get_logger(), "odom position: %f ",msg->pose.pose.position.x);
+  //RCLCPP_INFO(this->get_logger(), "odom position: %f ",msg->pose.pose.position.x);
 }
 
 void MapMemoryNode::updateMap(){

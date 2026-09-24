@@ -30,14 +30,14 @@ void CostmapNode::publishCostmap() {
 
   grid.data = costmap_.returnGrid();
 
-  RCLCPP_INFO(this->get_logger(), "costmap returned with %zu cells", costmap_.returnGrid().size()); 
+  //RCLCPP_INFO(this->get_logger(), "costmap returned with %zu cells", costmap_.returnGrid().size()); 
   costmap_pub_->publish(grid);
 }
 
 void CostmapNode::laserCallback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
   last_scan_stamp_ = msg->header.stamp; // store lidar time stamp in member variable
   costmap_.processScan(msg->ranges, msg->angle_min, msg->angle_increment, msg->range_min, msg->range_max); // pass in lidar msg to processScan
-  RCLCPP_INFO(this->get_logger(), "scan with %zu number of ranges",msg->ranges.size());
+  //RCLCPP_INFO(this->get_logger(), "scan with %zu number of ranges",msg->ranges.size());
 }
  
 int main(int argc, char ** argv)
