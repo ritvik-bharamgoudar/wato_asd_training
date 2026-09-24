@@ -9,10 +9,12 @@
 #include "geometry_msgs/msg/point_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
 
+const double GOAL_THRESHOLD = 0.5;
+
 class PlannerNode : public rclcpp::Node {
 
 public:
-    PlannerNode();
+    PlannerNode(); 
 
 
 private:
@@ -22,6 +24,10 @@ private:
 
     geometry_msgs::msg::PointStamped goal_;
     geometry_msgs::msg::Pose robot_pose_;
+    nav_msgs::msg::OccupancyGrid current_map_;
+
+    bool is_goal_received_ = false;
+    bool is_odom_received_ = false;
 
     void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
     void goalCallback(const geometry_msgs::msg::PointStamped::SharedPtr msg);
