@@ -70,7 +70,7 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
     }
 
     // returns a path: list of grid cells from start to finish 
-    std::vector<int> PlannerCore::aStar(int start_idx, int goal_idx, const std::vector<int8_t>& grid) {
+    std::vector<int> PlannerCore::searchAStar(const std::vector<int8_t>& grid, int start_idx, int goal_idx) {
 
         // open_set: a min-heap of (f_score, index) pairs - compared on f_score so top gives min f_score
         std::priority_queue<std::pair<double,int>, std::vector<std::pair<double,int>>, std::greater<>> open_set;
@@ -127,7 +127,7 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
                     g_score[n_idx] = tentative_g;      // store lower g score
                     came_from[n_idx] = current;        // stepped into from current
                     // evaluate f = g + h and add to heap
-                    open_set.push({tentative_g + heuristic(n_idx, goal_idx), n_idx});
+                    open_set.push({tentative_g + calcHeuristic(n_idx, goal_idx), n_idx});
                 }
             }
         }

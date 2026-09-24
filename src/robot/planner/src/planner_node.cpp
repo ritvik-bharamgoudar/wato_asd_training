@@ -16,7 +16,7 @@ PlannerNode::PlannerNode() : Node("planner_node"), state_(State::WAITING_FOR_GOA
 }
 
 void PlannerNode::goalCallback(const geometry_msgs::msg::PointStamped::SharedPtr msg) {
-    is_goal_received = true;
+    is_goal_received_ = true;
     goal_ = *msg;
     state_ = State::WAITING_FOR_ROBOT_TO_REACH_GOAL;
     
@@ -31,7 +31,7 @@ void PlannerNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg){
 }
 
 void PlannerNode::mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
-  current_map_ = *msg
+  current_map_ = *msg;
   RCLCPP_INFO(this->get_logger(), "map returned with %zu cells", msg->data.size()); 
 }
 
@@ -52,7 +52,7 @@ void PlannerNode::timerCallback(){
 }
 
 void PlannerNode::planPath(){
-    if (!is_goal_received_ || !is_odom_received_ || current_map_data.empty()) {
+    if (!is_goal_received_ || !is_odom_received_ || current_map.data.empty()) {
         //warning message
         return;
     }
@@ -75,7 +75,7 @@ void PlannerNode::planPath(){
 
     //convert path cells to world coordinates and calculate heading
 
-    nav_mgs::msg::Path path_msg;
+    nav_msgs::msg::Path path_msg;
     path_msg.header.stamp = this->get_clock()->now();
     path_msg.header.frame_id = "map";
     path_msg.poses = //list of poses with orientation
