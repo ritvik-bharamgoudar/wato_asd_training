@@ -37,9 +37,22 @@ class ControlNode : public rclcpp::Node {
 
     //pp parameters
     double lookahead_distance_ = 0.5;
-    double linear_speed_ = 1.2;
-    double max_angular_z_ = 1.5;
+    double linear_speed_ = 1.5;
+    double max_angular_z_ = 2;
     double goal_tolerance_ = 0.15;
+
+    double enter_rotate_threshold_ = M_PI / 2.0; // if heading error above, rotate in place
+    double exit_rotate_threshold_ = M_PI / 6.0;  // must drop below to resume normal driving
+    double rotate_angular_speed_ = 0.2;
+    double small_heading_thresh_ = 0.25; // heading error below this, gentle tracking instead of pp
+    double small_heading_gain_ = 0.5;
+
+    bool rotating_in_place_ = false;
+
+    double max_delta_omega_ = 0.3; // turning rate limit
+    double last_omega_ = 0.0; // for rate limit previous tick comparison
+    double last_linear_ = 0.0;
+    double max_delta_linear_ = 0.2; // rate limit
 
 
 

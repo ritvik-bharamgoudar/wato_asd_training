@@ -12,6 +12,11 @@ double ControlCore::computeDistance(double x1, double y1, double x2, double y2) 
     return std::sqrt(std::pow(x2 - x1,2) + std::pow(y2 - y1,2));
 }
 
+double ControlCore::computeHeadingError(double lx, double ly) 
+{
+    return std::atan2(ly, lx); // heading to lookahead point
+}
+
 // finds first path node above dist threshold and converts to robot frame
 std::tuple<double, double, bool, int> ControlCore::findLookaheadPoint(
     const nav_msgs::msg::Path::SharedPtr path,
@@ -62,6 +67,32 @@ std::pair<double, double> ControlCore::purePursuit(
     }
 
     return std::make_pair(linear_x, angular_z);
+}
+
+// called in node if acute heading to next point
+std::pair<double, double> ControlCore::turnInPlace(double heading_error, double rotate_angular_speed)
+{   
+    //which way to turn
+    double angular_z = (heading_error > 0.0) ? rotate_angular_speed : -rotate_angular_speed;
+    return std::make_pair(0.0, angular_z);
+}
+
+//called in node if shallow heading to next point
+std::pair<double, double> ControlCore::gentleTracking(double heading_error, double linear_speed, double small_heading_gain)
+{
+    double angular_z = small_heading_gain * heading_error; // slowly coorect for shallow heading
+    return std::make_pair(linear_speed, angular_z);
+}
+
+double ControlCore::rateLimit(double desired_vel, double last_vel, double max_delta_vel) 
+{
+    double delta = desired_vel - last_vel;
+    if (delta > max_delta_vel) {
+        delta = max_delta_vel;
+    } else if (delta < -max_delta_vel) {
+        delta = -max_delta_vel;
+    }
+    return last_vel + delta;
 }
 
 bool ControlCore::checkGoalReached(const nav_msgs::msg::Path::SharedPtr path, double robot_x, double robot_y, double goal_tolerance)

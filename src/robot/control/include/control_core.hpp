@@ -26,7 +26,17 @@ class ControlCore {
     
     bool checkGoalReached(const nav_msgs::msg::Path::SharedPtr path, double robot_x, double robot_y, double goal_tolerance);
 
-  private:
+    // if turn too tight or shallow - use different turning regimes
+    double computeHeadingError(double lx, double ly);
+    // rotate in place if too tight
+    std::pair<double, double> turnInPlace(double heading_error, double rotate_angular_speed);
+    // more linear with small heading correction, pp curvature too jarring
+    std::pair<double, double> gentleTracking(double heading_error, double linear_speed, double small_heading_gain);
+    
+    // caps change in speeds
+    double rateLimit(double desired_omega, double last_omega, double max_delta_omega);
+  
+    private:
     rclcpp::Logger logger_;
 
     double computeDistance(double x1, double y1, double x2, double y2);
