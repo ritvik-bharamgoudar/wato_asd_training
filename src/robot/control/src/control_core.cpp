@@ -64,6 +64,13 @@ std::pair<double, double> ControlCore::purePursuit(
     return std::make_pair(linear_x, angular_z);
 }
 
+bool ControlCore::checkGoalReached(const nav_msgs::msg::Path::SharedPtr path, double robot_x, double robot_y, double goal_tolerance)
+{
+    const auto& goal_pose = path->poses.back(); //last path node
+    double dist = computeDistance(robot_x, robot_y, goal_pose.pose.position.x, goal_pose.pose.position.y);
+    return dist <= goal_tolerance;
+}
+
 }
 
 

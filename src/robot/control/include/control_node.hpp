@@ -37,8 +37,9 @@ class ControlNode : public rclcpp::Node {
 
     //pp parameters
     double lookahead_distance_ = 0.5;
-    double linear_speed_ = 0.7;
+    double linear_speed_ = 1.2;
     double max_angular_z_ = 1.5;
+    double goal_tolerance_ = 0.15;
 
 
 

@@ -7,7 +7,7 @@
 #include <cstdint>
 
 const int8_t OBSTACLE = 100;
-const double COST_WEIGHT = 0.05;
+const double COST_WEIGHT = 0.2;
 const int WIDTH = 400;
 const int HEIGHT = 400;
 

@@ -138,9 +138,19 @@ void CostmapCore::inflateObstacles(std::vector<int8_t> &grid){
                 if (0<=window_row && window_row<HEIGHT && 0<=window_col && window_col<WIDTH){
                     double dist = sqrt(pow(d_row * RES, 2) + (pow(d_col * RES, 2))); // euclidean distance
                     if (dist <= INF_RADIUS){
+                        int obst_cost;
+                        // account for robot body hitting obstacles
+                        if (dist<=CLEARANCE)
+                        {
+                            obst_cost = MAX_COST;
+                        }
+                        else 
+                        {
                         //double k = log(100.0) / INF_RADIUS;
                         //int obst_cost = int(MAX_COST * exp(-k*dist)); // cost reaches too far - not sure if affects A* heuristic
-                        int obst_cost = int(MAX_COST * (1 - (dist/INF_RADIUS))); // linearly decreasing cost
+                        obst_cost = int(MAX_COST * (1 - ((dist-CLEARANCE)/(INF_RADIUS-CLEARANCE)))); // linearly decreasing cost from edge of CLEARNACE
+                        }
+
                         markObstacles(grid, window_row, window_col, obst_cost);
                     }
                 }
