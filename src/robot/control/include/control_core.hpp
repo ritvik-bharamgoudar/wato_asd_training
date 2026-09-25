@@ -10,9 +10,11 @@ class ControlCore {
   public:
     // Constructor, we pass in the node's RCLCPP logger to enable logging to terminal
     ControlCore(const rclcpp::Logger& logger);
-  
+
+
   private:
     rclcpp::Logger logger_;
+
 };
 
 } 
