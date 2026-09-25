@@ -42,8 +42,17 @@ std::tuple<double, double, bool, int> ControlCore::findLookaheadPoint(
             return std::make_tuple(lx, ly, true, i);
         }
     }
-    // if nothing found
-    return std::make_tuple(0.0, 0.0, false, start_index);
+    // if nothing found then must be too close to goal
+    // set lookahead to goal point
+    //f:final node, d: delta, l: lookahead
+    double fx = path->poses.back().pose.position.x;
+    double fy = path->poses.back().pose.position.y;
+    double dx = fx - robot_x;
+    double dy = fy - robot_y;
+    double lx = dx * cos_t - dy * sin_t;
+    double ly = dx * sin_t + dy * cos_t;
+    int final_index = static_cast<int>(path->poses.size()) - 1;
+    return std::make_tuple(lx, ly, true, final_index);
 }
 
 

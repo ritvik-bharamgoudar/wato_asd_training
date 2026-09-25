@@ -11,7 +11,7 @@ const int G_HEIGHT = 400; // rows = H / RES
 const double G_RES = 0.1; // size of once cell RESxRES metres
 const double G_ORIGIN_X = G_WIDTH / 2 * -1 * G_RES;
 const double G_ORIGIN_Y = G_HEIGHT / 2 * -1 * G_RES;
-const double DIST_THRESHOLD = 1.5; // metres
+const double DIST_THRESHOLD = 2; // metres
 //const double NEW_COST_WEIGHT = 0.7; // for weighted averaging of incoming costmap
 const int HITS_REQUIRED = 9; // cell needs a cost at least 3 times to reach global map
 const int HIT_CAP = 40;

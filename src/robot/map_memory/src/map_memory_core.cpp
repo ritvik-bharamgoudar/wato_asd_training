@@ -30,8 +30,8 @@ void MapMemoryCore::mergeCostmap(const nav_msgs::msg::OccupancyGrid::SharedPtr c
     int c_col = static_cast<int>(i) % c_width;
 
     //costmap cell to cartesian coordinates
-    double c_x = c_col * costmap_msg->info.resolution + costmap_msg->info.origin.position.x;
-    double c_y = c_row * costmap_msg->info.resolution + costmap_msg->info.origin.position.y;
+    double c_x = (c_col+0.5) * costmap_msg->info.resolution + costmap_msg->info.origin.position.x;
+    double c_y = (c_row+0.5) * costmap_msg->info.resolution + costmap_msg->info.origin.position.y;
 
     // costmap frame to global frame - transform with robot pose
     double g_x = r_x + (c_x * cos_t) - (c_y * sin_t);

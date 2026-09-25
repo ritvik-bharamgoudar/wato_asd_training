@@ -39,7 +39,7 @@ class ControlNode : public rclcpp::Node {
     double lookahead_distance_ = 1;
     double linear_speed_ = 1.5;
     double max_angular_z_ = 2;
-    double goal_tolerance_ = 0.15;
+    double goal_tolerance_ = 0.5;
 
     double enter_rotate_threshold_ = 100.0 * M_PI / 180.0; // if heading error above, rotate in place
     double exit_rotate_threshold_ = 50.0 * M_PI / 180.0;  // must drop below to resume normal driving
