@@ -17,16 +17,30 @@ void CostmapCore::processScan(const std::vector<float> &ranges, double angle_min
     for (size_t i=0; i < ranges.size(); i++){
         double angle = angle_min + i * angle_increment;
         double range = ranges[i]; // extract polar coordinate
-        
-        if (range > range_min && range < range_max){ // discard if out of Lidar range
-            int row;
-            int col;
-            convertToGrid(range, angle, row, col); // polar -> cartesian -> discrete grid cell
-            markLine(occup_grid_, (WIDTH/2), (HEIGHT/2), col, row, MAX_COST, FREE); // set cost to any marked cells
-            }
+        int row;
+        int col;
+
+        // if nan, leave cells unmarked
+        if (std::isnan(range)) {
+            continue;
         }
+        // if too close, then also leave unmarked
+        if (range <= range_min) {
+            continue;
+        }
+        // if beyond the max range mark as free including endpoint
+        if (std::isinf(range) || range >= range_max) {
+            convertToGrid(range_max, angle, row, col);
+            markLine(occup_grid_, (WIDTH/2), (HEIGHT/2), col, row, FREE, FREE);
+            continue;
+        }
+
+        convertToGrid(range, angle, row, col); // polar -> cartesian -> discrete grid cell
+        markLine(occup_grid_, (WIDTH/2), (HEIGHT/2), col, row, MAX_COST, FREE); // set cost to any marked cells
+        }
+        
     inflateObstacles(occup_grid_); // set linearly decreasing cost to cells surrounding each obstacle
-}
+    }
 
 
 

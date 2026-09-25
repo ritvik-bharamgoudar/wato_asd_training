@@ -4,9 +4,9 @@
 #include "rclcpp/rclcpp.hpp"
 #include <vector>
 
-const int WIDTH = 100; // cells
-const int HEIGHT = 100; // cells
-const double RES = 0.2; // both grid size and res chosen after testing in map
+const int WIDTH = 300; // cells
+const int HEIGHT = 300; // cells
+const double RES = 0.05; // both grid size and res chosen after testing in map
 const double INF_RADIUS = 1.0; // metres
 const int8_t MAX_COST = 100;
 const int8_t UNKNOWN = -1;

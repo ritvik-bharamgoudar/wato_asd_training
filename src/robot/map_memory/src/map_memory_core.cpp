@@ -41,28 +41,38 @@ void MapMemoryCore::mergeCostmap(const nav_msgs::msg::OccupancyGrid::SharedPtr c
     int g_row = int(std::floor((g_y - G_ORIGIN_Y) / G_RES));
 
     if (g_row >= 0 && g_row < G_HEIGHT && g_col >= 0 && g_col < G_WIDTH) {
-      global_map_[g_row * G_WIDTH + g_col] = static_cast<int8_t>(new_cost);
-      //assignWeightedCost(g_row, g_col, G_WIDTH, new_cost);
+      //global_map_[g_row * G_WIDTH + g_col] = static_cast<int8_t>(new_cost);
+      assignWeightedCost(g_row, g_col, G_WIDTH, new_cost);
     }
   }
   RCLCPP_INFO(logger_, "mergeCostmap called, costmap size=%zu, pose=(%f, %f, %f)", costmap_msg->data.size(), r_x, r_y, r_theta);
     
 }
 
-// needs to consider what happens to costmap cells outside of lidar range - they get set to 0 but that's not true, should be unknown
-// requires propagating that lidar info into costmap as an unknown cell
+// count how many times 
 void MapMemoryCore::assignWeightedCost(int new_row, int new_col, int width, int new_cost){
-      int ix = new_row * width + new_col;
-
-      if (new_cost > 0){
-        if (hit_count_[ix] < HITS_REQUIRED){
-          hit_count_[ix]++;
-        }
-        if (hit_count_[ix] >= HITS_REQUIRED && new_cost > global_map_[ix]){
-          global_map_[ix] = static_cast<int8_t>(new_cost);
-        }
+    int i = (new_row * width + new_col);
+    if (new_cost >= 0){
+      if (new_cost == MAX_COST) {
+          // increment if MAX_COST
+          if (hit_count_[i] < HIT_CAP) {
+              hit_count_[i] += 3; // weight it to favour obstacle detections than free
+                                  // because lidar traces scraping obstacles returning as free
+          }
+      } 
+      else if (new_cost == FREE) {
+          // if marked as free, decrement
+          if (hit_count_[i] > 0) {
+              hit_count_[i]--;
+          }
+      } 
+      else {
+          global_map_[i] = static_cast<int8_t>(new_cost); //cells from inflate obstacles
+          return;
       }
 
+      global_map_[i] = (hit_count_[i] >= HITS_REQUIRED) ? MAX_COST : FREE;
+  }
 }
 
 

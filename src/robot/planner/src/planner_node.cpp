@@ -80,8 +80,8 @@ void PlannerNode::planPath(){
     std::vector<int> path_cells = planner_.searchAStar(current_map_.data, start_idx, goal_idx);
 
     if (path_cells.empty()) {
-    RCLCPP_WARN(this->get_logger(), "no path found from start to goal");
-    return;
+        RCLCPP_WARN(this->get_logger(), "no path found from start to goal");
+        return;
     }
 
     // initialise array of pairs to store world coordinates 
@@ -100,7 +100,7 @@ void PlannerNode::planPath(){
 
     nav_msgs::msg::Path path_msg;
     path_msg.header.stamp = this->get_clock()->now();
-    path_msg.header.frame_id = "map";
+    path_msg.header.frame_id = "sim_world";
 
     // calculate heading to next point
 

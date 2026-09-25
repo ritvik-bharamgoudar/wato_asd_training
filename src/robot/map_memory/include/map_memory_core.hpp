@@ -13,7 +13,10 @@ const double G_ORIGIN_X = G_WIDTH / 2 * -1 * G_RES;
 const double G_ORIGIN_Y = G_HEIGHT / 2 * -1 * G_RES;
 const double DIST_THRESHOLD = 1.5; // metres
 //const double NEW_COST_WEIGHT = 0.7; // for weighted averaging of incoming costmap
-const int HITS_REQUIRED = 3; // cell needs a cost at least 3 times to reach global map
+const int HITS_REQUIRED = 9; // cell needs a cost at least 3 times to reach global map
+const int HIT_CAP = 40;
+const int FREE = 0;
+const int MAX_COST = 100;
 
 namespace robot
 {
