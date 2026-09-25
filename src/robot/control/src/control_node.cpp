@@ -55,11 +55,11 @@ void ControlNode::controlLoop() {
     auto [lx, ly, found, updated_index] = control_.findLookaheadPoint(current_path_, robot_x_, robot_y_, robot_theta_, lookahead_distance_, last_index_);
     last_index_ = updated_index;
 
-    if (!found) //fallback if no lookahead point
+    if (!found) //stop publishing if close to final node
     {
         geometry_msgs::msg::Twist stop_cmd;
         cmd_vel_pub_->publish(stop_cmd);
-        last_omega_ = 0.0;
+        //last_omega_ = 0.0;
         return;
     }
 
@@ -75,6 +75,7 @@ void ControlNode::controlLoop() {
     else if (rotating_in_place_ && std::abs(heading_error) < exit_rotate_threshold_) 
     {
         rotating_in_place_ = false;
+        last_omega_ = 0.0; // stop after turn in place
     }
 
     // store output from core
@@ -85,10 +86,10 @@ void ControlNode::controlLoop() {
     {
         linear_angular_vels = control_.turnInPlace(heading_error, rotate_angular_speed_);
     } 
-    else if (std::abs(heading_error) < small_heading_thresh_) 
-    {
-        linear_angular_vels = control_.gentleTracking(heading_error, linear_speed_, small_heading_gain_);
-    } 
+    //else if (std::abs(heading_error) < small_heading_thresh_) 
+    //{
+    //  linear_angular_vels = control_.gentleTracking(heading_error, linear_speed_, small_heading_gain_);
+    //} 
     else 
     {
         linear_angular_vels = control_.purePursuit(lx, ly, linear_speed_, max_angular_z_);
