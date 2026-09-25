@@ -23,16 +23,31 @@ ControlNode::ControlNode(): Node("control"), control_(robot::ControlCore(this->g
 
 
 void ControlNode::pathCallback(const nav_msgs::msg::Path::SharedPtr msg) {
-    RCLCPP_INFO(this->get_logger(),"path size: %zu, first pos: %.2f, last pos: %.2f", 
-    msg->poses.size(), msg->poses.front().pose.position.x,msg->poses.back().pose.position.x );
+    current_path_ = msg;
+
 }
 
 void ControlNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
-
-    RCLCPP_INFO(this->get_logger(), "odom x = %.2f", msg->pose.pose.position.x);
+    robot_x_ = msg->pose.pose.position.x;
+    robot_y_ = msg->pose.pose.position.y;
+    robot_theta_ = tf2::getYaw(msg->pose.pose.orientation);
+    has_odom_ = true; // no control loop unless odom come throuhg
 }
 
 void ControlNode::controlLoop() {
+
+    if (!current_path_ || current_path_->poses.empty() || !has_odom_) {
+        return;
+    }
+
+    auto [lx, ly, found, updated_index] = control_.findLookaheadPoint(current_path_, robot_x_, robot_y_, robot_theta_, lookahead_distance_, last_index_);
+
+    last_index_ = updated_index;
+
+    RCLCPP_INFO(this->get_logger(), "lookahead point: lx=%.2f ly=%.2f, index=%d",lx, ly, updated_index);
+
+    auto [pp_linear, pp_angular] = control_.purePursuit(lx, ly, linear_speed_, max_angular_z_);
+    RCLCPP_INFO(this->get_logger(), "pure pursuit: linear_x=%.2f angular_z=%.2f", pp_linear, pp_angular);
 
     geometry_msgs::msg::Twist cmd;
     cmd.linear.x = 0.1;

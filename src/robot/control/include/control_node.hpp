@@ -26,6 +26,22 @@ class ControlNode : public rclcpp::Node {
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::TimerBase::SharedPtr timer_;
 
+    nav_msgs::msg::Path::SharedPtr current_path_;
+
+    double robot_x_ = 0.0;
+    double robot_y_ = 0.0;
+    double robot_theta_ = 0.0;
+    bool has_odom_ = false;
+
+    int last_index_ = 0;
+
+    //pp parameters
+    double lookahead_distance_ = 0.5;
+    double linear_speed_ = 0.7;
+    double max_angular_z_ = 1.5;
+
+
+
 };
 
 #endif
