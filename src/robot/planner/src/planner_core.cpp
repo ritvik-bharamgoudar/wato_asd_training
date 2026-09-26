@@ -11,12 +11,12 @@ namespace robot
 
 PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
 
-    double PlannerCore::calcHeuristic(int idx, int goal_idx) {
+    double PlannerCore::calcHeuristic(int idx, int goal_idx, int grid_width) {
     // convert both indices back into (x,y) grid coordinate
-    int x1 = idx % WIDTH;
-    int y1 = idx / WIDTH;
-    int x2 = goal_idx % WIDTH;
-    int y2 = goal_idx / WIDTH;
+    int x1 = idx % grid_width;
+    int y1 = idx / grid_width;
+    int x2 = goal_idx % grid_width;
+    int y2 = goal_idx / grid_width;
 
     double dx = x1 - x2;
     double dy = y1 - y2;
@@ -26,12 +26,12 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
     }
 
     // for a given cell, return valid neighbours to add to search
-    std::vector<int> PlannerCore::getNeighbors(int idx, const std::vector<int8_t>& grid) {
+    std::vector<int> PlannerCore::getNeighbours(int idx, const std::vector<int8_t>& grid, int grid_width, int grid_height) {
         std::vector<int> neighbors;
 
         // convert index to x (col), y(row)
-        int x = idx % WIDTH;
-        int y = idx / WIDTH;
+        int x = idx % grid_width;
+        int y = idx / grid_width;
 
         // 8 possible moves: 4 cardinal, 4 diagonal
         const std::array<std::pair<int,int>, 8> directions = {{
@@ -45,8 +45,8 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
             int ny = y + d.second;
 
             // check bounds
-            if (nx >= 0 && nx < WIDTH && ny >= 0 && ny < HEIGHT) {
-                int n_idx = ny * WIDTH + nx;
+            if (nx >= 0 && nx < grid_width && ny >= 0 && ny < grid_height) {
+                int n_idx = ny * grid_width + nx;
 
                 // invalid if the cell is max cost
                 if (grid[n_idx] != OBSTACLE) {
@@ -74,7 +74,7 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
     }
 
     // returns a path: list of grid cells from start to finish 
-    std::vector<int> PlannerCore::searchAStar(const std::vector<int8_t>& grid, int start_idx, int goal_idx) {
+    std::vector<int> PlannerCore::searchAStar(const std::vector<int8_t>& grid, int start_idx, int goal_idx, int grid_width, int grid_height) {
 
         // open_set: a min-heap of (f_score, index) pairs - compared on f_score so top gives min f_score
         std::priority_queue<std::pair<double,int>, std::vector<std::pair<double,int>>, std::greater<>> open_set;
@@ -90,7 +90,7 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
 
         // start cell f_score is just the heuristic, since g=0
         g_score[start_idx] = 0.0;
-        open_set.push({calcHeuristic(start_idx, goal_idx), start_idx});
+        open_set.push({calcHeuristic(start_idx, goal_idx, grid_width), start_idx});
 
         // no goal found if heap empty
         while (!open_set.empty()) {
@@ -108,12 +108,12 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
             closed.insert(current);
 
             // check every valid (in bounds, non-obstacle) neighbor
-            for (int n_idx : getNeighbors(current, grid)) {
+            for (int n_idx : getNeighbours(current, grid, grid_width, grid_height)) {
                 if (closed.count(n_idx)) continue; // already settled, skip
 
                 // check if step is diagonal or cardinal
-                int cx = current % WIDTH, cy = current / WIDTH;
-                int nx = n_idx % WIDTH,   ny = n_idx / WIDTH;
+                int cx = current % grid_width, cy = current / grid_width;
+                int nx = n_idx % grid_width,   ny = n_idx / grid_width;
                 bool diagonal = (cx != nx) && (cy != ny);
 
                 // distance cost: 1 for cardinal, sqrt(2) for diagonal
@@ -131,7 +131,7 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
                     g_score[n_idx] = tentative_g;      // store lower g score
                     came_from[n_idx] = current;        // stepped into from current
                     // evaluate f = g + h and add to heap
-                    open_set.push({tentative_g + calcHeuristic(n_idx, goal_idx), n_idx});
+                    open_set.push({tentative_g + calcHeuristic(n_idx, goal_idx, grid_width), n_idx});
                 }
             }
         }

@@ -77,7 +77,7 @@ void PlannerNode::planPath(){
     int goal_idx = goal_gy * info.width + goal_gx;
 
     // call A* search and return list of cells that form path
-    std::vector<int> path_cells = planner_.searchAStar(current_map_.data, start_idx, goal_idx);
+    std::vector<int> path_cells = planner_.searchAStar(current_map_.data, start_idx, goal_idx, info.width, info.height);
 
     if (path_cells.empty()) {
         RCLCPP_WARN(this->get_logger(), "no path found from start to goal");
