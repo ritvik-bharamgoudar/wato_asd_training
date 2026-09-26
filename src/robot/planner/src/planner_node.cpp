@@ -104,7 +104,7 @@ void PlannerNode::planPath(){
 
     // calculate heading to next point
 
-    double prev_yaw = 0.0; // what if the goal point is at the robot position?
+    double prev_yaw = 0.0; // if the goal point is at the robot position
 
     for (size_t i = 0; i < world_points.size(); ++i) {
         geometry_msgs::msg::PoseStamped pose_stamped;

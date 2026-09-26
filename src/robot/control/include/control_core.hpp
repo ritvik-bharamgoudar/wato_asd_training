@@ -30,8 +30,6 @@ class ControlCore {
     double computeHeadingError(double lx, double ly);
     // rotate in place if too tight
     std::pair<double, double> turnInPlace(double heading_error, double rotate_angular_speed);
-    // more linear with small heading correction, pp curvature too jarring
-    std::pair<double, double> gentleTracking(double heading_error, double linear_speed, double small_heading_gain);
     
     // caps change in speeds
     double rateLimit(double desired_omega, double last_omega, double max_delta_omega);

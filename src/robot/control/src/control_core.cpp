@@ -86,13 +86,6 @@ std::pair<double, double> ControlCore::turnInPlace(double heading_error, double 
     return std::make_pair(0.0, angular_z);
 }
 
-//called in node if shallow heading to next point
-std::pair<double, double> ControlCore::gentleTracking(double heading_error, double linear_speed, double small_heading_gain)
-{
-    double angular_z = small_heading_gain * heading_error; // slowly coorect for shallow heading
-    return std::make_pair(linear_speed, angular_z);
-}
-
 double ControlCore::rateLimit(double desired_vel, double last_vel, double max_delta_vel) 
 {
     double delta = desired_vel - last_vel;

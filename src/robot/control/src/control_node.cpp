@@ -86,10 +86,6 @@ void ControlNode::controlLoop() {
     {
         linear_angular_vels = control_.turnInPlace(heading_error, rotate_angular_speed_);
     } 
-    //else if (std::abs(heading_error) < small_heading_thresh_) 
-    //{
-    //  linear_angular_vels = control_.gentleTracking(heading_error, linear_speed_, small_heading_gain_);
-    //} 
     else 
     {
         linear_angular_vels = control_.purePursuit(lx, ly, linear_speed_, max_angular_z_);
