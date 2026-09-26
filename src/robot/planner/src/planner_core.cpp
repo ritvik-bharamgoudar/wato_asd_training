@@ -121,7 +121,7 @@ PlannerCore::PlannerCore(const rclcpp::Logger& logger) : logger_(logger) {}
 
                 // costmap penalty: cells near obstacles also carry costs (from inflation)
                 // COST_WEIGHT empirically tuned
-                double obst_proximity_cost = COST_WEIGHT * static_cast<double>(grid[n_idx]);
+                double obst_proximity_cost = (grid[n_idx]<0) ? 0.0 : COST_WEIGHT * static_cast<double>(grid[n_idx]);
 
                 // tentative g: proposed cost to reach this cell: current cost + step cost + any obstacle cost
                 double tentative_g = g_score[current] + step_cost + obst_proximity_cost;

@@ -43,16 +43,16 @@ class ControlNode : public rclcpp::Node {
 
     double enter_rotate_threshold_ = 100.0 * M_PI / 180.0; // if heading error above, rotate in place
     double exit_rotate_threshold_ = 50.0 * M_PI / 180.0;  // must drop below to resume normal driving
-    double rotate_angular_speed_ = 0.8;
+    double rotate_angular_speed_ = 1.2;
     //double small_heading_thresh_ = 15.0 * M_PI / 180.0; // heading error below this, gentle tracking instead of pp
     //double small_heading_gain_ = 0.5; // corerect small deviations
 
     bool rotating_in_place_ = false;
 
-    double max_delta_omega_ = 0.2; // turning rate limit
+    double max_delta_omega_ = 0.4; // turning rate limit
     double last_omega_ = 0.0; // for rate limit previous tick comparison
     double last_linear_ = 0.0;
-    double max_delta_linear_ = 0.2; // rate limit
+    double max_delta_linear_ = 0.4; // rate limit
 
 
 

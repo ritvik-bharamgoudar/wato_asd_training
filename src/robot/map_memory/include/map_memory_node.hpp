@@ -29,6 +29,11 @@ class MapMemoryNode : public rclcpp::Node {
     double robot_y_ = 0.0;
     double robot_theta_ = 0.0;
 
+    // used to store the most recent to costmap callback
+    double costmap_pose_x_ = 0.0;
+    double costmap_pose_y_ = 0.0;
+    double costmap_theta_ = 0.0;
+
     double last_x_ = 0.0;
     double last_y_ = 0.0;
 

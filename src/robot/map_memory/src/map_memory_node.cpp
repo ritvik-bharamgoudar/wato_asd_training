@@ -45,12 +45,6 @@ void MapMemoryNode::publishMap() {
 }
 
 
-void MapMemoryNode::costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
-  latest_costmap_ = msg;
-  is_costmap_updated_ = true;
-  //RCLCPP_INFO(this->get_logger(), "costmap with %zu size",msg->data.size());
-}
-
 void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
   robot_x_ = msg->pose.pose.position.x;
   robot_y_ = msg->pose.pose.position.y;
@@ -68,11 +62,24 @@ void MapMemoryNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg) {
   // distance travelled
   double dist = std::sqrt(std::pow(robot_x_ - last_x_, 2)+ std::pow(robot_y_ - last_y_, 2));
   
-  if (dist >= DIST_THRESHOLD) {
+  if (dist >= DIST_THRESHOLD) 
+  {
     last_x_ = robot_x_;
     last_y_ = robot_y_;
     should_update_map_ = true;
   }
+  }
+
+
+void MapMemoryNode::costmapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
+  latest_costmap_ = msg;
+  is_costmap_updated_ = true;
+  //RCLCPP_INFO(this->get_logger(), "costmap with %zu size",msg->data.size());
+
+  // use most recent odom pose to costmap callback
+  costmap_pose_x_ = robot_x_;
+  costmap_pose_y_ = robot_y_;
+  costmap_theta_ = robot_theta_;
   //RCLCPP_INFO(this->get_logger(), "odom position: %f ",msg->pose.pose.position.x);
 }
 
@@ -81,7 +88,7 @@ void MapMemoryNode::updateMap(){
     return; // need both true to continue
   }
 
-  map_memory_.mergeCostmap(latest_costmap_, robot_x_, robot_y_, robot_theta_);
+  map_memory_.mergeCostmap(latest_costmap_, costmap_pose_x_, costmap_pose_y_, costmap_theta_);
   publishMap();
 
   should_update_map_ = false;
